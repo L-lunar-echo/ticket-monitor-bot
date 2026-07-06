@@ -73,14 +73,6 @@
 
     <div id="events-container">
         {% for ev_id, ev in events.items() %}
-        {# 檢查任何一個區域的狀態只要不是「已售完」，就認定為有票 #}
-        {% set has_ticket = false %}
-        {% for zone, status in ev.tickets.items() %}
-            {% if status != "已售完" %}
-                {% set has_ticket = true %}
-            {% endif %}
-        {% endfor %}
-        
         <div class="event-card" id="card-{{ ev_id }}">
             <div class="event-header">
                 <div class="main-info">
@@ -91,9 +83,7 @@
                         <div class="event-name">{{ ev.name }}</div>
                         <div class="event-meta">更新：{{ ev.updated_at or '尚未取得資料' }}</div>
                     </div>
-                    <span id="badge-{{ ev_id }}" class="status-badge {{ 'status-available' if has_ticket else 'status-sold-out' }}">
-                        {{ '還有票 🎫' if has_ticket else '已售完 🈳' }}
-                    </span>
+                    <span id="badge-{{ ev_id }}" class="status-badge status-sold-out">已售完 🈳</span>
                 </div>
                 <div class="toggle-btn" onclick="toggleDetails('{{ ev_id }}')">🔽 展開完整票池狀況</div>
             </div>
@@ -101,19 +91,7 @@
             <div class="event-details" id="details-{{ ev_id }}">
                 <a href="{{ ev.url }}" target="_blank" style="color: var(--accent-color); font-weight: 700; text-decoration: none; display: block; margin-bottom: 8px;">➡️ 前往購票頁面</a>
                 <ul id="ticket-list-{{ ev_id }}" style="padding-left: 20px; color: #444; margin-top: 8px; font-size: 13px; list-style-type: none;">
-                    {% set ns = namespace(printed=false) %}
-                    {% for ticket, status in ev.tickets.items() %}
-                        {# 只在狀態非「已售完」時渲染出來 #}
-                        {% if status != "已售完" %}
-                            <li style="margin-bottom: 5px;">🚨 {{ ticket }}: <b style="color: #dc3545;">{{ status }}</b></li>
-                            {% set ns.printed = true %}
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {# 如果整場都售完，顯示一行乾淨的提示 #}
-                    {% if not ns.printed %}
-                        <li class="text-soldout text-center py-1">🔒 目前所有區域均無釋票 (已售完)</li>
-                    {% endif %}
+                    <li class="text-soldout text-center py-1">🔒 目前所有區域均無釋票</li>
                 </ul>
             </div>
         </div>
@@ -122,74 +100,31 @@
 
     <script>
         const STORAGE_KEY = 'ticket_monitor_subscriptions';
-
-        function loadSubscriptions() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? new Set(JSON.parse(raw)) : new Set();
-            } catch (e) {
-                return new Set();
-            }
-        }
-
-        function saveSubscriptions(set) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set)));
-            } catch (e) {
-                console.error('無法儲存訂閱設定', e);
-            }
-        }
-
-        let subscriptions = loadSubscriptions();
+        let subscriptions = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
         let lastKnownHasTicket = {};
 
-        // 初始化目前的狀態紀錄
         window.addEventListener('DOMContentLoaded', () => {
             subscriptions.forEach(id => {
                 const box = document.getElementById('notify-toggle-' + id);
                 if (box) box.checked = true;
             });
-            
-            // 抓取一開始 HTML 渲染出來的狀態，塞入歷史狀態庫中避免初次 fetch 誤判
-            {% for ev_id, ev in events.items() %}
-                {% set initial_has = false %}
-                {% for zone, status in ev.tickets.items() %}
-                    {% if status != "已售完" %}{% set initial_has = true %}{% endif %}
-                {% endfor %}
-                lastKnownHasTicket['{{ ev_id }}'] = {{ 'true' if initial_has else 'false' }};
-            {% endfor %}
-
             updatePermissionHint();
         });
 
         function updatePermissionHint() {
             const hint = document.getElementById('permission-hint');
-            if (!('Notification' in window)) {
-                hint.innerText = '此瀏覽器不支援通知功能';
-            } else if (Notification.permission === 'granted') {
-                hint.innerText = '✅ 通知已開啟';
-            } else if (Notification.permission === 'denied') {
-                hint.innerText = '⚠️ 通知已被封鎖,請到瀏覽器設定手動開啟';
-            } else {
-                hint.innerText = '尚未開啟通知';
-            }
+            if (Notification.permission === 'granted') hint.innerText = '✅ 通知已開啟';
+            else if (Notification.permission === 'denied') hint.innerText = '❎ 通知已被封鎖';
+            else hint.innerText = '尚未開啟通知';
         }
 
         function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                alert('此瀏覽器不支援通知功能');
-                return;
-            }
             Notification.requestPermission().then(() => updatePermissionHint());
         }
 
         function handleCheckboxChange(id, checked) {
-            if (checked) {
-                subscriptions.add(id);
-            } else {
-                subscriptions.delete(id);
-            }
-            saveSubscriptions(subscriptions);
+            checked ? subscriptions.add(id) : subscriptions.delete(id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(subscriptions)));
         }
 
         function toggleDetails(id) {
@@ -205,13 +140,11 @@
         }
 
         function fireNotification(eventName) {
-            if (!('Notification' in window) || Notification.permission !== 'granted') return;
-            new Notification('🎫 釋票通知!', {
-                body: eventName + ' 出現可購買的票券,快去看看!',
-            });
+            if (Notification.permission === 'granted') {
+                new Notification('🎫 釋票通知!', { body: eventName + ' 出現可購買的票券!' });
+            }
         }
 
-        // 狀態自動更新 (規格化串接精準張數版後端)
         setInterval(() => {
             fetch('/api/status')
             .then(r => r.json())
@@ -224,23 +157,16 @@
 
                     let hasTicket = false;
                     let listHtml = '';
-                    
                     for (let zone in ev.tickets) {
-                        let status = ev.tickets[zone];
-                        // 已售完的區域直接過濾掉不顯示
-                        if (status !== "已售完") {
+                        if (ev.tickets[zone] !== "已售完") {
                             hasTicket = true;
-                            listHtml += `<li style="margin-bottom: 5px;">🚨 ${zone}: <b style="color: #dc3545;">${status}</b></li>`;
+                            listHtml += `<li style="margin-bottom: 5px;">🚨 ${zone}: <b style="color: #dc3545;">${ev.tickets[zone]}</b></li>`;
                         }
                     }
 
-                    // 整場都完全沒票才顯示已售完
-                    if (!hasTicket) {
-                        listHtml = `<li class="text-soldout text-center py-1">🔒 目前所有區域均無釋票 (已售完)</li>`;
-                    }
+                    if (!hasTicket) listHtml = `<li class="text-soldout text-center py-1">🔒 目前所有區域均無釋票 (已售完)</li>`;
                     listUl.innerHTML = listHtml;
 
-                    // 確保頂部的大 Badge 狀態標籤同步更新
                     if (hasTicket) {
                         badge.innerText = "還有票 🎫";
                         badge.className = "status-badge status-available";
@@ -249,14 +175,12 @@
                         badge.className = "status-badge status-sold-out";
                     }
 
-                    // 只有「之前沒票 -> 現在有票」的那一刻才發送網頁通知
-                    const prev = lastKnownHasTicket[id];
-                    if (prev === false && hasTicket === true && subscriptions.has(id)) {
+                    if (lastKnownHasTicket[id] === false && hasTicket === true && subscriptions.has(id)) {
                         fireNotification(ev.name);
                     }
                     lastKnownHasTicket[id] = hasTicket;
                 }
-            }).catch(err => console.error("更新失敗", err));
+            });
         }, 15000);
     </script>
 </body>
