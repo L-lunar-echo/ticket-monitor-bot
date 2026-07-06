@@ -1,12 +1,65 @@
 [
   {
-    "id": "concert-01",
-    "name": "演唱會名稱",
-    "url": "https://tixcraft.com/...",
-    "updated_at": "2026-07-07 02:00",
-    "tickets": {
-      "特區": "還有票",
-      "搖滾區": "已售完"
-    }
+    "id": "tixcraft-mayday-test",
+    "name": "｜測試｜",
+    "url": "https://tixcraft.com/ticket/area/26_maydaytp/22480",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "donghae-khh-0725",
+    "name": "7/25｜DONGHAE｜高雄場",
+    "url": "https://daydreamerstudio.kktix.cc/events/b14fcf04",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "donghae-khh-0726",
+    "name": "7/26｜DONGHAE｜高雄場",
+    "url": "https://daydreamerstudio.kktix.cc/events/cd3b83be",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "tixcraft-aespa-taipei",
+    "name": "8/11｜aespa｜台北場",
+    "url": "https://tixcraft.com/ticket/area/26_aespa/22415",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "ibon-current-event",
+    "name": "9/12｜FTISLAND｜高雄場",
+    "url": "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=B0BS5PP2&PRODUCT_ID=B0BQXQ8M&strItem=WEB%E7%B6%B2%E7%AB%99%E5%85%A5%E5%8F%A31",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "henry-moodie-khh",
+    "name": "9/28｜Henry Moodie｜高雄場",
+    "url": "https://tixcraft.com/ticket/area/26_henry/22868",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "tixcraft-bts-1119",
+    "name": "11/19｜BTS｜高雄場",
+    "url": "https://tixcraft.com/ticket/area/26_btskns/22510",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "tixcraft-bts-1121",
+    "name": "11/21｜BTS｜高雄場",
+    "url": "https://tixcraft.com/ticket/area/26_btskns/22763",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
+  },
+  {
+    "id": "tixcraft-bts-1122",
+    "name": "11/22｜BTS｜高雄場",
+    "url": "https://tixcraft.com/ticket/area/26_btskns/22764",
+    "updated_at": "尚未掃描",
+    "tickets": {"全區": "掃描中..."}
   }
 ]
